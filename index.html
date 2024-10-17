@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Match Function</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .roboto-regular {
+            font-family: "Roboto", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            font-size: 16px;
+        }
+
+        .roboto-medium {
+            font-family: "Roboto", sans-serif;
+            font-weight: 500;
+            font-style: normal;
+            font-size: 16px;
+        }
+
+        body {
+            height: 100vh;
+            background: #eeeeee;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px 1px #00000080;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px !important;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #777;
+            border-radius: 5px;
+        }
+
+        input:focus {
+            border-color: #506EF8;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            color: #ffffff;
+            background: #506EF8;
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 0 5px 1px #506EF8;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            box-shadow: none;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="urlForm">
+        <h1 class="roboto-medium">Download System</h1>
+        <input type="text" id="urlInput" name="urlInput" class="roboto-regular" placeholder="Enter a URL">
+        <button type="submit" class="roboto-medium">Submit</button>
+    </form>
+
+    <script>
+
+        document.getElementById("urlForm").addEventListener("submit", function (event) {
+            event.preventDefault();  // Prevent the form from submitting
+
+            let enteredURL = document.getElementById("urlInput").value;
+
+            // Extract valid URL using a regular expression
+            let urlPattern = /(https?:\/\/[^\s]+)/g;
+            let validURL = enteredURL.match(urlPattern); // Find valid URL in the input
+
+            if (validURL && validURL.length > 0) {
+                validURL = validURL[0];  // Take the first valid URL
+            } else {
+                alert("No valid URL found!");
+                return;
+            }
+
+            // Predefined URL substrings and corresponding functions
+            let predefinedURLs = {
+                "genny.lovo.ai": gennyLovoAi,
+                "example2.com": functionForExample2,
+                "example3.com": functionForExample3
+            };
+
+            // Check if the valid URL contains one of the predefined URLs
+            for (let url in predefinedURLs) {
+                if (validURL.includes(url)) {
+                    fetchWebsiteSource(validURL, predefinedURLs[url]);  // Fetch the website source and pass it to the function
+                    return;
+                }
+            }
+
+            alert("No matching URL found!");
+        });
+
+        // Fetch the website source code from the Node.js server
+        function fetchWebsiteSource(url, callbackFunction) {
+            fetch('/fetch-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        callbackFunction(url, data.sourceCode);  // Pass the URL and source code to the function
+                    } else {
+                        alert(data.message || 'Failed to fetch website source code.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the website source:', error);
+                    alert("Error fetching website source code.");
+                });
+        }
+
+        // Define the function for "genny.lovo.ai" that accepts the URL and source code as parameters
+        function gennyLovoAi(url, sourceCode) {
+            console.log("Function for genny.lovo.ai called with URL:", url);
+
+            // Create a DOM parser to load the source code
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(sourceCode, 'text/html');
+
+            // Find all video tags
+            let videos = doc.querySelectorAll('video');
+
+            if (videos.length > 0) {
+                // Get the first video tag and extract the src attribute
+                let videoSrc = videos[0].querySelector('source')?.src || videos[0].src;
+
+                if (videoSrc) {
+                    // Open the video src in a new window
+                    window.open(videoSrc, '_blank');
+                } else {
+                    alert("No video src found in the first video tag!");
+                }
+            } else {
+                alert("No video tags found on this page!");
+            }
+        }
+
+        // Define other example functions
+        function functionForExample2(url, sourceCode) {
+            alert("Function for Example 2 called with URL: " + url);
+        }
+
+        function functionForExample3(url, sourceCode) {
+            alert("Function for Example 3 called with URL: " + url);
+        }
+
+    </script>
+</body>
+
+</html>
